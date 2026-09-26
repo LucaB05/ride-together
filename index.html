@@ -141,6 +141,18 @@
     h2 { font-size: clamp(30px, 4vw, 42px); line-height: 1.12; letter-spacing: -0.03em; font-weight: 700; margin-bottom: 16px; }
     .section-head p { font-size: 18px; color: var(--muted); }
 
+    .beta { padding: 0 0 96px; }
+    .beta-card {
+      display: flex; align-items: center; justify-content: space-between; gap: 32px;
+      background: var(--accent-soft); border: 1px solid #d6e2ff; border-radius: 24px; padding: 40px 44px;
+    }
+    .beta-card h2 { font-size: clamp(26px, 3.2vw, 34px); margin-bottom: 10px; }
+    .beta-card p { color: var(--muted); font-size: 17px; max-width: 560px; }
+    .beta-card .kicker { margin-bottom: 10px; font-size: 13px; color: var(--accent); }
+    .btn-primary { background: var(--accent); color: #fff; flex: none; }
+    .btn-primary:hover { box-shadow: 0 8px 24px rgba(37, 99, 235, .3); }
+    .btn-primary svg { width: 18px; height: 18px; }
+
     .problem { border-top: 1px solid var(--line); }
     .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
     .card {
@@ -246,6 +258,8 @@
       .problem-grid, .how-grid, .privacy-grid { grid-template-columns: 1fr; }
       .nav-links a { display: none; }
       section { padding: 72px 0; }
+      .beta { padding-bottom: 72px; }
+      .beta-card { flex-direction: column; align-items: flex-start; padding: 32px 28px; }
     }
     @media (max-width: 480px) {
       .wrap { padding: 0 16px; }
@@ -253,6 +267,8 @@
       .dark { margin: 0; border-radius: 24px; }
       .btn-store { flex: 1 1 100%; justify-content: center; }
       .phone { transform: scale(.92); transform-origin: top center; margin-bottom: -48px; }
+      .beta-card { padding: 28px 20px; }
+      .btn-primary { width: 100%; justify-content: center; }
     }
   </style>
 </head>
@@ -342,6 +358,23 @@
               <span class="rc-btn" data-i18n="mock.cta">Send ride request</span>
             </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test users -->
+    <div class="beta" id="beta">
+      <div class="wrap">
+        <div class="beta-card reveal">
+          <div>
+            <p class="kicker" data-i18n="beta.kicker">Test users wanted</p>
+            <h2 data-i18n="beta.title">Help us shape Ride Together.</h2>
+            <p data-i18n="beta.lead">We're looking for riders to try the app before launch and tell us what works. All you need to sign up is your email address.</p>
+          </div>
+          <a class="btn btn-primary" href="https://docs.google.com/forms/d/e/1FAIpQLSfpaYX_d79CNFo-PyaP77SGxxeRvuh1HxiKUgaWsZRPruJCeQ/viewform" target="_blank" rel="noopener">
+            <span data-i18n="beta.cta">Sign up as a tester</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
         </div>
       </div>
     </div>
@@ -572,6 +605,10 @@
         "hero.note": "Coming soon — rider testing starts spring 2027.",
         "store.ios.small": "Download on the", "store.android.small": "Get it on",
         "mock.sharing": "Sharing with friends", "mock.meta": "Sport · Touring · 2 km", "mock.cta": "Send ride request",
+        "beta.kicker": "Test users wanted",
+        "beta.title": "Help us shape Ride Together.",
+        "beta.lead": "We're looking for riders to try the app before launch and tell us what works. All you need to sign up is your email address.",
+        "beta.cta": "Sign up as a tester",
         "problem.kicker": "The problem",
         "problem.title": "Riding is better together. Finding company is hard.",
         "problem.lead": "Most riders already want someone to ride with — they just have no simple way to find them.",
@@ -625,6 +662,10 @@
         "hero.note": "Kommer snart — testning med förare startar våren 2027.",
         "store.ios.small": "Ladda ned på", "store.android.small": "Hämta på",
         "mock.sharing": "Delar med vänner", "mock.meta": "Sport · Touring · 2 km", "mock.cta": "Skicka åkförfrågan",
+        "beta.kicker": "Vi söker testare",
+        "beta.title": "Hjälp oss forma Ride Together.",
+        "beta.lead": "Vi letar efter förare som vill testa appen före lanseringen och berätta vad som funkar. Allt du behöver för att anmäla dig är din e-postadress.",
+        "beta.cta": "Anmäl dig som testare",
         "problem.kicker": "Problemet",
         "problem.title": "Det är roligare att köra tillsammans. Men svårt att hitta sällskap.",
         "problem.lead": "De flesta förare vill redan ha någon att köra med — de saknar bara ett enkelt sätt att hitta varandra.",
