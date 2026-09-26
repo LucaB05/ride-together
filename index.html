@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ride Together</title>
+  <meta name="description" content="Ride Together is a live map for motorcyclists across Sweden — see who's riding near you right now and find people to ride with, on your own terms.">
+  <meta name="theme-color" content="#16181c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2316181c'/%3E%3Ccircle cx='11' cy='16' r='5' fill='none' stroke='%233b82f6' stroke-width='2.5'/%3E%3Ccircle cx='21' cy='16' r='5' fill='none' stroke='%23fff' stroke-width='2.5'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fafaf9;
+      --surface: #ffffff;
+      --ink: #16181c;
+      --muted: #5f646d;
+      --line: #e6e6e3;
+      --accent: #2563eb;
+      --accent-soft: #e8efff;
+      --dark: #16181c;
+      --dark-2: #22252b;
+      --dark-3: #30343b;
+      --radius: 18px;
+      --max: 1120px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+    /* Header */
+    header {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(250, 250, 249, 0.85);
+      backdrop-filter: saturate(180%) blur(12px);
+      -webkit-backdrop-filter: saturate(180%) blur(12px);
+      border-bottom: 1px solid transparent;
+      transition: border-color .2s;
+    }
+    header.scrolled { border-bottom-color: var(--line); }
+    .nav { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+    .brand-mark { width: 28px; height: 28px; }
+    .nav-links { display: flex; align-items: center; gap: 28px; font-size: 15px; color: var(--muted); }
+    .nav-links a:hover { color: var(--ink); }
+    .lang {
+      display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 2px; background: var(--surface);
+    }
+    .lang button {
+      font: inherit; font-size: 13px; font-weight: 600; border: 0; background: transparent; color: var(--muted);
+      padding: 4px 10px; border-radius: 999px; cursor: pointer;
+    }
+    .lang button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      height: 52px; padding: 0 20px; border-radius: 14px;
+      font-weight: 600; font-size: 15px;
+      transition: transform .15s ease, background .15s ease, box-shadow .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-store { background: var(--ink); color: #fff; }
+    .btn-store:hover { box-shadow: 0 8px 24px rgba(22, 24, 28, .18); }
+    .btn-store svg { width: 22px; height: 22px; flex: none; }
+    .btn-store small { display: block; font-size: 11px; font-weight: 500; opacity: .7; line-height: 1.1; }
+    .btn-store span { display: block; line-height: 1.2; }
+    .btn-ghost { border: 1px solid var(--line); background: var(--surface); }
+    .dark .btn-store { background: #fff; color: var(--ink); }
+
+    /* Hero */
+    .hero { padding: 72px 0 96px; }
+    .hero-grid { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 64px; align-items: center; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 600; color: var(--accent);
+      background: var(--accent-soft); padding: 6px 12px; border-radius: 999px; margin-bottom: 24px;
+    }
+    .eyebrow::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    h1 {
+      font-size: clamp(40px, 6vw, 64px); line-height: 1.05; letter-spacing: -0.035em; font-weight: 700;
+      margin-bottom: 20px;
+    }
+    h1 em { font-style: normal; color: var(--accent); }
+    .lead { font-size: 19px; color: var(--muted); max-width: 520px; margin-bottom: 36px; }
+    .stores { display: flex; flex-wrap: wrap; gap: 12px; }
+    .note { font-size: 13px; color: var(--muted); margin-top: 16px; }
+
+    /* Phone mockup */
+    .phone {
+      width: 300px; height: 610px; margin: 0 auto;
+      background: var(--dark); border-radius: 46px; padding: 12px;
+      box-shadow: 0 40px 80px -20px rgba(22, 24, 28, .35), 0 0 0 1px rgba(0,0,0,.06);
+      position: relative;
+    }
+    .screen {
+      width: 100%; height: 100%; border-radius: 36px; overflow: hidden; position: relative;
+      background: #1d2026;
+    }
+    .map { position: absolute; inset: 0; }
+    .map svg { width: 100%; height: 100%; display: block; }
+    .notch { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 90px; height: 26px; background: var(--dark); border-radius: 20px; z-index: 3; }
+    .chip-row { position: absolute; top: 48px; left: 14px; right: 14px; display: flex; justify-content: space-between; z-index: 2; }
+    .chip {
+      background: rgba(34, 37, 43, .92); color: #fff; font-size: 12px; font-weight: 600;
+      padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.06);
+    }
+    .share {
+      position: absolute; left: 14px; right: 14px; bottom: 136px; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(34, 37, 43, .94); color: #fff; border-radius: 14px; padding: 10px 12px;
+      font-size: 12px; font-weight: 600;
+    }
+    .toggle { width: 34px; height: 20px; border-radius: 999px; background: var(--accent); position: relative; }
+    .toggle::after { content: ""; position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+    .rider-card {
+      position: absolute; left: 14px; right: 14px; bottom: 16px; z-index: 2;
+      background: var(--dark-2); color: #fff; border-radius: 18px; padding: 14px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .rc-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #1e40af); display: grid; place-items: center; font-weight: 700; font-size: 14px; }
+    .rc-name { font-weight: 600; font-size: 14px; line-height: 1.2; }
+    .rc-meta { font-size: 11px; color: #a3a8b1; }
+    .live { margin-left: auto; font-size: 10px; font-weight: 700; color: #4ade80; background: rgba(74, 222, 128, .12); padding: 3px 8px; border-radius: 999px; }
+    .rc-btn { display: block; text-align: center; background: var(--accent); border-radius: 10px; padding: 9px; font-size: 12px; font-weight: 600; }
+
+    /* Sections */
+    section { padding: 96px 0; }
+    .section-head { max-width: 640px; margin-bottom: 56px; }
+    .kicker { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--accent); margin-bottom: 12px; }
+    h2 { font-size: clamp(30px, 4vw, 42px); line-height: 1.12; letter-spacing: -0.03em; font-weight: 700; margin-bottom: 16px; }
+    .section-head p { font-size: 18px; color: var(--muted); }
+
+    .problem { border-top: 1px solid var(--line); }
+    .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px;
+    }
+    .card h3 { font-size: 18px; letter-spacing: -0.01em; margin-bottom: 8px; }
+    .card p { color: var(--muted); font-size: 15px; }
+    .icon {
+      width: 44px; height: 44px; border-radius: 12px; display: grid; place-items: center;
+      background: var(--accent-soft); color: var(--accent); margin-bottom: 20px;
+    }
+    .icon svg { width: 22px; height: 22px; }
+
+    .live-grid { display: grid; grid-template-columns: 0.95fr 1.05fr; gap: 56px; align-items: center; }
+    .live-grid .section-head { margin-bottom: 32px; }
+    .live-list { list-style: none; display: grid; gap: 22px; }
+    .live-list li { display: flex; gap: 16px; }
+    .live-list .icon { flex: none; margin: 0; width: 40px; height: 40px; }
+    .live-list h3 { font-size: 16px; margin-bottom: 2px; letter-spacing: -0.01em; }
+    .live-list p { color: var(--muted); font-size: 15px; }
+    .live-map {
+      position: relative; aspect-ratio: 5 / 4; border-radius: 28px; overflow: hidden;
+      background: #1d2026; box-shadow: 0 40px 80px -30px rgba(22, 24, 28, .4);
+    }
+    .live-map > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .pin { position: absolute; transform: translate(-50%, -50%); }
+    .pin i {
+      display: block; width: 16px; height: 16px; border-radius: 50%;
+      background: #e5e7eb; border: 3px solid #16181c; position: relative; z-index: 1;
+    }
+    .pin.friend i { background: #60a5fa; }
+    .pin.me i { background: var(--accent); border-color: #fff; width: 18px; height: 18px; }
+    .pin::before {
+      content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px;
+      border-radius: 50%; background: currentColor; opacity: 0; animation: pulse 2.4s ease-out infinite;
+    }
+    .pin { color: #e5e7eb; } .pin.friend { color: #60a5fa; } .pin.me { color: #3b82f6; }
+    .pin:nth-child(3)::before { animation-delay: .6s; } .pin:nth-child(4)::before { animation-delay: 1.2s; }
+    .pin:nth-child(5)::before { animation-delay: 1.8s; }
+    @keyframes pulse { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(3.4); opacity: 0; } }
+    .map-chip {
+      position: absolute; top: 18px; left: 18px; display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(34, 37, 43, .94); color: #fff; font-size: 13px; font-weight: 600;
+      padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.06);
+    }
+    .map-chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 4px rgba(74, 222, 128, .18); }
+    .map-card {
+      position: absolute; right: 18px; bottom: 18px; width: min(240px, calc(100% - 36px));
+      background: var(--dark-2); color: #fff; border-radius: 16px; padding: 12px;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+    .map-card .rc-top { margin-bottom: 0; }
+
+    .how-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .step { display: flex; gap: 20px; }
+    .step-num {
+      flex: none; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line);
+      display: grid; place-items: center; font-size: 14px; font-weight: 700; background: var(--surface);
+    }
+
+    .dark { background: var(--dark); color: #fff; border-radius: 32px; margin: 0 16px; }
+    .dark .section-head p, .dark .card p { color: #a3a8b1; }
+    .dark .card { background: var(--dark-2); border-color: var(--dark-3); }
+    .dark .icon { background: rgba(59, 130, 246, .14); color: #60a5fa; }
+    .dark .kicker { color: #60a5fa; }
+    .privacy-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+
+    .cities { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+    .city {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 12px 18px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); font-weight: 600;
+    }
+    .city::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+    .city.soon { color: var(--muted); font-weight: 500; }
+    .city.soon::before { background: var(--line); }
+
+    .cta { text-align: center; }
+    .cta .section-head { margin: 0 auto 36px; }
+    .cta .stores { justify-content: center; }
+
+    footer { border-top: 1px solid var(--line); padding: 32px 0 48px; font-size: 14px; color: var(--muted); }
+    .foot { display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: center; }
+    .foot a:hover { color: var(--ink); }
+
+    .toast {
+      position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 20px); opacity: 0; pointer-events: none;
+      background: var(--ink); color: #fff; padding: 12px 18px; border-radius: 12px; font-size: 14px; font-weight: 500;
+      transition: all .25s ease; z-index: 20; max-width: calc(100% - 32px); text-align: center;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+    .reveal.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      html { scroll-behavior: auto; }
+    }
+
+    @media (prefers-reduced-motion: reduce) { .pin::before { animation: none; } }
+
+    @media (max-width: 900px) {
+      .hero-grid, .live-grid { grid-template-columns: 1fr; gap: 56px; }
+      .problem-grid, .how-grid, .privacy-grid { grid-template-columns: 1fr; }
+      .nav-links a { display: none; }
+      section { padding: 72px 0; }
+    }
+    @media (max-width: 480px) {
+      .wrap { padding: 0 16px; }
+      .hero { padding: 40px 0 72px; }
+      .dark { margin: 0; border-radius: 24px; }
+      .btn-store { flex: 1 1 100%; justify-content: center; }
+      .phone { transform: scale(.92); transform-origin: top center; margin-bottom: -48px; }
+    }
+  </style>
+</head>
+<body>
+  <header id="top">
+    <div class="wrap nav">
+      <a href="#" class="brand" aria-label="Ride Together">
+        <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#16181c"/>
+          <circle cx="11" cy="16" r="5" fill="none" stroke="#3b82f6" stroke-width="2.5"/>
+          <circle cx="21" cy="16" r="5" fill="none" stroke="#fff" stroke-width="2.5"/>
+        </svg>
+        Ride Together
+      </a>
+      <nav class="nav-links">
+        <a href="#problem" data-i18n="nav.why">Why</a>
+        <a href="#live" data-i18n="nav.live">Live map</a>
+        <a href="#how" data-i18n="nav.how">How it works</a>
+        <a href="#privacy" data-i18n="nav.privacy">Privacy</a>
+        <div class="lang" role="group" aria-label="Language">
+          <button type="button" data-lang="sv" aria-pressed="false">SV</button>
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <div class="hero">
+      <div class="wrap hero-grid">
+        <div>
+          <span class="eyebrow" data-i18n="hero.eyebrow">Launching across Sweden</span>
+          <h1 data-i18n-html="hero.title">Find people to <em>ride with.</em></h1>
+          <p class="lead" data-i18n="hero.lead">Ride Together is a live map for motorcyclists. See who's riding near you right now, send a ride request, and meet up. Your location stays hidden until you choose to share it.</p>
+          <div class="stores">
+            <a href="#" class="btn btn-store js-store" aria-label="Download on the App Store">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.59 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.32-3.5l.03-.02zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.3-.56.64-1.05 1.67-.92 2.66.97.08 1.96-.49 2.56-1.2z"/></svg>
+              <span><small data-i18n="store.ios.small">Download on the</small>App Store</span>
+            </a>
+            <a href="#" class="btn btn-store js-store" aria-label="Get it on Google Play">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.2 2.6c-.13.15-.2.37-.2.65v17.5c0 .28.07.5.2.65l.04.04L13.8 12v-.2L4.24 2.56l-.04.04zM16.99 15.2l-3.19-3.2v-.2l3.19-3.2.07.04 3.78 2.15c1.08.61 1.08 1.61 0 2.23l-3.78 2.14-.07.04zM17.06 15.16L13.8 11.9 4.2 21.4c.36.38.94.42 1.6.05l11.26-6.3M17.06 8.64L5.8 2.35c-.66-.38-1.24-.33-1.6.05l9.6 9.5 3.26-3.26z"/></svg>
+              <span><small data-i18n="store.android.small">Get it on</small>Google Play</span>
+            </a>
+          </div>
+          <p class="note" data-i18n="hero.note">Coming soon — rider testing starts spring 2027.</p>
+        </div>
+
+        <div class="phone" aria-hidden="true">
+          <div class="screen">
+            <div class="notch"></div>
+            <div class="map">
+              <svg viewBox="0 0 276 586" preserveAspectRatio="xMidYMid slice">
+                <rect width="276" height="586" fill="#1d2026"/>
+                <path d="M-10 420 C 60 380, 90 300, 150 290 S 260 240, 300 180" stroke="#2a2e36" stroke-width="22" fill="none"/>
+                <path d="M-10 420 C 60 380, 90 300, 150 290 S 260 240, 300 180" stroke="#343944" stroke-width="10" fill="none"/>
+                <path d="M40 -10 L 90 600" stroke="#2c3038" stroke-width="7"/>
+                <path d="M-10 150 L 290 210" stroke="#2c3038" stroke-width="6"/>
+                <path d="M190 -10 L 230 600" stroke="#2c3038" stroke-width="5"/>
+                <path d="M-10 520 L 290 470" stroke="#2c3038" stroke-width="5"/>
+                <rect x="120" y="360" width="90" height="60" rx="10" fill="#1f3326" opacity=".8"/>
+                <path d="M0 250 Q 70 230 120 250 T 276 245 L 276 270 Q 200 280 120 272 T 0 275 Z" fill="#1c2b3d" opacity=".9"/>
+                <circle cx="150" cy="290" r="26" fill="#3b82f6" opacity=".18"/>
+                <circle cx="150" cy="290" r="9" fill="#3b82f6" stroke="#fff" stroke-width="3"/>
+                <circle cx="78" cy="190" r="8" fill="#e5e7eb" stroke="#16181c" stroke-width="3"/>
+                <circle cx="214" cy="350" r="8" fill="#e5e7eb" stroke="#16181c" stroke-width="3"/>
+                <circle cx="100" cy="430" r="8" fill="#60a5fa" stroke="#16181c" stroke-width="3"/>
+              </svg>
+            </div>
+            <div class="chip-row">
+              <span class="chip">Örebro ▾</span>
+              <span class="chip">⚙︎</span>
+            </div>
+            <div class="share">
+              <span data-i18n="mock.sharing">Sharing with friends</span>
+              <span class="toggle"></span>
+            </div>
+            <div class="rider-card">
+              <div class="rc-top">
+                <div class="avatar">E</div>
+                <div>
+                  <div class="rc-name">Elin</div>
+                  <div class="rc-meta" data-i18n="mock.meta">Sport · Touring · 2 km</div>
+                </div>
+                <span class="live">LIVE</span>
+              </div>
+              <span class="rc-btn" data-i18n="mock.cta">Send ride request</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Problem -->
+    <section id="problem" class="problem">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="kicker" data-i18n="problem.kicker">The problem</p>
+          <h2 data-i18n="problem.title">Riding is better together. Finding company is hard.</h2>
+          <p data-i18n="problem.lead">Most riders already want someone to ride with — they just have no simple way to find them.</p>
+        </div>
+        <div class="problem-grid">
+          <div class="card reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></div>
+            <h3 data-i18n="problem.1.title">Scattered groups</h3>
+            <p data-i18n="problem.1.body">Rides get planned in closed chats and old forum threads. If you're new in town, you're not in them.</p>
+          </div>
+          <div class="card reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <h3 data-i18n="problem.2.title">Hard to find a match</h3>
+            <p data-i18n="problem.2.body">Pace, bike and riding style matter. It's hard to know who fits before you've already met.</p>
+          </div>
+          <div class="card reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <h3 data-i18n="problem.3.title">Location feels risky</h3>
+            <p data-i18n="problem.3.body">Most location apps share too much, for too long. Riders want control over who sees them — and when.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live map -->
+    <section id="live">
+      <div class="wrap live-grid">
+        <div>
+          <div class="section-head reveal">
+            <p class="kicker" data-i18n="live.kicker">The live map</p>
+            <h2 data-i18n="live.title">See who's riding — right now.</h2>
+            <p data-i18n="live.lead">Open the app and the map shows riders near you who have chosen to be visible. No old check-ins, no guessing: if they're on the map, they're out riding.</p>
+          </div>
+          <ul class="live-list">
+            <li class="reveal">
+              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+              <div><h3 data-i18n="live.1.title">Real-time positions</h3><p data-i18n="live.1.body">Riders move on the map as they ride, updated every few seconds.</p></div>
+            </li>
+            <li class="reveal">
+              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg></div>
+              <div><h3 data-i18n="live.2.title">Tap a rider</h3><p data-i18n="live.2.body">See their bike, experience and riding style — then send a ride request or head their way.</p></div>
+            </li>
+            <li class="reveal">
+              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg></div>
+              <div><h3 data-i18n="live.3.title">Filter what you see</h3><p data-i18n="live.3.body">Switch city, show only friends, or narrow it down to riders who ride like you.</p></div>
+            </li>
+            <li class="reveal">
+              <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+              <div><h3 data-i18n="live.4.title">Always up to date</h3><p data-i18n="live.4.body">When someone stops sharing or loses connection, they disappear from the map within a minute.</p></div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="live-map reveal" aria-hidden="true">
+          <svg viewBox="0 0 500 400" preserveAspectRatio="xMidYMid slice">
+            <rect width="500" height="400" fill="#1d2026"/>
+            <path d="M0 250 Q 120 215 240 240 T 500 225 L 500 262 Q 380 275 240 270 T 0 285 Z" fill="#1c2b3d"/>
+            <path d="M-20 360 C 100 320, 160 200, 270 190 S 440 120, 520 60" stroke="#2a2e36" stroke-width="26" fill="none"/>
+            <path d="M-20 360 C 100 320, 160 200, 270 190 S 440 120, 520 60" stroke="#343944" stroke-width="12" fill="none"/>
+            <path d="M90 -10 L 150 420" stroke="#2c3038" stroke-width="8"/>
+            <path d="M360 -10 L 400 420" stroke="#2c3038" stroke-width="6"/>
+            <path d="M-10 110 L 510 150" stroke="#2c3038" stroke-width="6"/>
+            <path d="M-10 350 L 510 320" stroke="#2c3038" stroke-width="5"/>
+            <rect x="200" y="300" width="110" height="70" rx="12" fill="#1f3326"/>
+            <rect x="400" y="170" width="70" height="40" rx="10" fill="#1f3326"/>
+          </svg>
+          <span class="map-chip" data-i18n="live.chip">5 riders live nearby</span>
+          <span class="pin me" style="left:54%;top:47%"><i></i></span>
+          <span class="pin" style="left:24%;top:30%"><i></i></span>
+          <span class="pin friend" style="left:76%;top:24%"><i></i></span>
+          <span class="pin" style="left:33%;top:78%"><i></i></span>
+          <span class="pin" style="left:84%;top:58%"><i></i></span>
+          <div class="map-card">
+            <div class="rc-top">
+              <div class="avatar">J</div>
+              <div>
+                <div class="rc-name">Johan</div>
+                <div class="rc-meta" data-i18n="live.card">Naked · 1.4 km away</div>
+              </div>
+              <span class="live">LIVE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section id="how">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="kicker" data-i18n="how.kicker">How it works</p>
+          <h2 data-i18n="how.title">Four simple ways to get riding.</h2>
+          <p data-i18n="how.lead">Build a profile with your bike, experience and interests. Then pick the way that suits you.</p>
+        </div>
+        <div class="how-grid">
+          <div class="card step reveal">
+            <span class="step-num">1</span>
+            <div>
+              <h3 data-i18n="how.1.title">Join a rideout</h3>
+              <p data-i18n="how.1.body">Browse planned rides and meets near you, join or apply, and coordinate the meeting point.</p>
+            </div>
+          </div>
+          <div class="card step reveal">
+            <span class="step-num">2</span>
+            <div>
+              <h3 data-i18n="how.2.title">Send a ride request</h3>
+              <p data-i18n="how.2.body">See a rider that fits? Introduce yourself. Once they accept, you can chat and plan the ride.</p>
+            </div>
+          </div>
+          <div class="card step reveal">
+            <span class="step-num">3</span>
+            <div>
+              <h3 data-i18n="how.3.title">Meet on the map</h3>
+              <p data-i18n="how.3.body">When a rider chooses to be visible, head their way and join up — directions open in your maps app.</p>
+            </div>
+          </div>
+          <div class="card step reveal">
+            <span class="step-num">4</span>
+            <div>
+              <h3 data-i18n="how.4.title">Ride with friends</h3>
+              <p data-i18n="how.4.body">Message riders you've connected with, drop a meeting pin, and set a time.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Privacy -->
+    <section id="privacy" class="dark">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="kicker" data-i18n="privacy.kicker">Privacy &amp; safety</p>
+          <h2 data-i18n="privacy.title">Hidden by default. You decide the rest.</h2>
+          <p data-i18n="privacy.lead">Ride Together is built so you never share more than you mean to.</p>
+        </div>
+        <div class="privacy-grid">
+          <div class="card reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22"/></svg></div>
+            <h3 data-i18n="privacy.1.title">Location off until you turn it on</h3>
+            <p data-i18n="privacy.1.body">Choose who can see you — friends only, or all signed-in riders — and stop sharing with one tap.</p>
+          </div>
+          <div class="card reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+            <h3 data-i18n="privacy.2.title">Only live, never history</h3>
+            <p data-i18n="privacy.2.body">We don't record your routes. When you stop sharing or go offline, your position disappears.</p>
+          </div>
+          <div class="card reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+            <h3 data-i18n="privacy.3.title">Extra protection for younger riders</h3>
+            <p data-i18n="privacy.3.body">Riders under 18 share location with friends only and can't be contacted first by adult strangers.</p>
+          </div>
+          <div class="card reveal">
+            <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></svg></div>
+            <h3 data-i18n="privacy.4.title">Block and report</h3>
+            <p data-i18n="privacy.4.body">Blocking someone immediately cuts off contact and location access. Reports go to real moderators.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cities -->
+    <section>
+      <div class="wrap">
+        <div class="section-head reveal">
+          <p class="kicker" data-i18n="cities.kicker">Where</p>
+          <h2 data-i18n="cities.title">Launching across all of Sweden.</h2>
+          <p data-i18n="cities.lead">Wherever you ride — from Malmö to Kiruna — there are riders near you on the map.</p>
+        </div>
+        <div class="cities reveal">
+          <span class="city">Stockholm</span>
+          <span class="city">Göteborg</span>
+          <span class="city">Malmö</span>
+          <span class="city">Uppsala</span>
+          <span class="city">Örebro</span>
+          <span class="city">Västerås</span>
+          <span class="city">Umeå</span>
+          <span class="city soon" data-i18n="cities.more">+ the rest of Sweden</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta" id="download">
+      <div class="wrap">
+        <div class="section-head reveal">
+          <h2 data-i18n="cta.title">Ready to ride together?</h2>
+          <p data-i18n="cta.lead">Free for iPhone and Android. Available soon.</p>
+        </div>
+        <div class="stores reveal">
+          <a href="#" class="btn btn-store js-store" aria-label="Download on the App Store">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16.37 12.6c-.02-2.2 1.8-3.26 1.88-3.31-1.03-1.5-2.62-1.7-3.18-1.73-1.35-.14-2.64.8-3.33.8-.69 0-1.74-.78-2.87-.76-1.47.02-2.83.86-3.59 2.18-1.53 2.66-.39 6.59 1.1 8.75.73 1.05 1.6 2.24 2.73 2.2 1.1-.05 1.51-.71 2.84-.71 1.32 0 1.7.71 2.86.69 1.18-.02 1.93-1.07 2.65-2.13.84-1.22 1.18-2.4 1.2-2.46-.03-.01-2.3-.88-2.32-3.5l.03-.02zM14.2 6.13c.6-.73 1.01-1.75.9-2.76-.87.04-1.92.58-2.54 1.3-.56.64-1.05 1.67-.92 2.66.97.08 1.96-.49 2.56-1.2z"/></svg>
+            <span><small data-i18n="store.ios.small">Download on the</small>App Store</span>
+          </a>
+          <a href="#" class="btn btn-store js-store" aria-label="Get it on Google Play">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.2 2.6c-.13.15-.2.37-.2.65v17.5c0 .28.07.5.2.65l.04.04L13.8 12v-.2L4.24 2.56l-.04.04zM16.99 15.2l-3.19-3.2v-.2l3.19-3.2.07.04 3.78 2.15c1.08.61 1.08 1.61 0 2.23l-3.78 2.14-.07.04zM17.06 15.16L13.8 11.9 4.2 21.4c.36.38.94.42 1.6.05l11.26-6.3M17.06 8.64L5.8 2.35c-.66-.38-1.24-.33-1.6.05l9.6 9.5 3.26-3.26z"/></svg>
+            <span><small data-i18n="store.android.small">Get it on</small>Google Play</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap foot">
+      <span>© <span id="year">2026</span> Ride Together</span>
+      <span data-i18n="footer.made">Made for riders in Sweden.</span>
+      <a href="#" class="js-top" data-i18n="footer.top">Back to top ↑</a>
+    </div>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const T = {
+      en: {
+        "nav.why": "Why", "nav.how": "How it works", "nav.privacy": "Privacy",
+        "hero.eyebrow": "Launching across Sweden",
+        "hero.title": "Find people to <em>ride with.</em>",
+        "hero.lead": "Ride Together is a live map for motorcyclists. See who's riding near you right now, send a ride request, and meet up. Your location stays hidden until you choose to share it.",
+        "hero.note": "Coming soon — rider testing starts spring 2027.",
+        "store.ios.small": "Download on the", "store.android.small": "Get it on",
+        "mock.sharing": "Sharing with friends", "mock.meta": "Sport · Touring · 2 km", "mock.cta": "Send ride request",
+        "problem.kicker": "The problem",
+        "problem.title": "Riding is better together. Finding company is hard.",
+        "problem.lead": "Most riders already want someone to ride with — they just have no simple way to find them.",
+        "problem.1.title": "Scattered groups",
+        "problem.1.body": "Rides get planned in closed chats and old forum threads. If you're new in town, you're not in them.",
+        "problem.2.title": "Hard to find a match",
+        "problem.2.body": "Pace, bike and riding style matter. It's hard to know who fits before you've already met.",
+        "problem.3.title": "Location feels risky",
+        "problem.3.body": "Most location apps share too much, for too long. Riders want control over who sees them — and when.",
+        "nav.live": "Live map",
+        "live.kicker": "The live map",
+        "live.title": "See who's riding — right now.",
+        "live.lead": "Open the app and the map shows riders near you who have chosen to be visible. No old check-ins, no guessing: if they're on the map, they're out riding.",
+        "live.1.title": "Real-time positions", "live.1.body": "Riders move on the map as they ride, updated every few seconds.",
+        "live.2.title": "Tap a rider", "live.2.body": "See their bike, experience and riding style — then send a ride request or head their way.",
+        "live.3.title": "Filter what you see", "live.3.body": "Switch city, show only friends, or narrow it down to riders who ride like you.",
+        "live.4.title": "Always up to date", "live.4.body": "When someone stops sharing or loses connection, they disappear from the map within a minute.",
+        "live.chip": "5 riders live nearby", "live.card": "Naked · 1.4 km away",
+        "how.kicker": "How it works",
+        "how.title": "Four simple ways to get riding.",
+        "how.lead": "Build a profile with your bike, experience and interests. Then pick the way that suits you.",
+        "how.1.title": "Join a rideout", "how.1.body": "Browse planned rides and meets near you, join or apply, and coordinate the meeting point.",
+        "how.2.title": "Send a ride request", "how.2.body": "See a rider that fits? Introduce yourself. Once they accept, you can chat and plan the ride.",
+        "how.3.title": "Meet on the map", "how.3.body": "When a rider chooses to be visible, head their way and join up — directions open in your maps app.",
+        "how.4.title": "Ride with friends", "how.4.body": "Message riders you've connected with, drop a meeting pin, and set a time.",
+        "privacy.kicker": "Privacy & safety",
+        "privacy.title": "Hidden by default. You decide the rest.",
+        "privacy.lead": "Ride Together is built so you never share more than you mean to.",
+        "privacy.1.title": "Location off until you turn it on",
+        "privacy.1.body": "Choose who can see you — friends only, or all signed-in riders — and stop sharing with one tap.",
+        "privacy.2.title": "Only live, never history",
+        "privacy.2.body": "We don't record your routes. When you stop sharing or go offline, your position disappears.",
+        "privacy.3.title": "Extra protection for younger riders",
+        "privacy.3.body": "Riders under 18 share location with friends only and can't be contacted first by adult strangers.",
+        "privacy.4.title": "Block and report",
+        "privacy.4.body": "Blocking someone immediately cuts off contact and location access. Reports go to real moderators.",
+        "cities.kicker": "Where",
+        "cities.title": "Launching across all of Sweden.",
+        "cities.lead": "Wherever you ride — from Malmö to Kiruna — there are riders near you on the map.",
+        "cities.more": "+ the rest of Sweden",
+        "cta.title": "Ready to ride together?",
+        "cta.lead": "Free for iPhone and Android. Available soon.",
+        "footer.made": "Made for riders in Sweden.", "footer.top": "Back to top ↑",
+        "toast": "Ride Together isn't in the stores yet — coming soon!"
+      },
+      sv: {
+        "nav.why": "Varför", "nav.how": "Så funkar det", "nav.privacy": "Integritet",
+        "hero.eyebrow": "Lanseras i hela Sverige",
+        "hero.title": "Hitta folk att <em>köra med.</em>",
+        "hero.lead": "Ride Together är en livekarta för motorcyklister. Se vilka som kör nära dig just nu, skicka en åkförfrågan och ses. Din position är dold tills du själv väljer att dela den.",
+        "hero.note": "Kommer snart — testning med förare startar våren 2027.",
+        "store.ios.small": "Ladda ned på", "store.android.small": "Hämta på",
+        "mock.sharing": "Delar med vänner", "mock.meta": "Sport · Touring · 2 km", "mock.cta": "Skicka åkförfrågan",
+        "problem.kicker": "Problemet",
+        "problem.title": "Det är roligare att köra tillsammans. Men svårt att hitta sällskap.",
+        "problem.lead": "De flesta förare vill redan ha någon att köra med — de saknar bara ett enkelt sätt att hitta varandra.",
+        "problem.1.title": "Utspridda grupper",
+        "problem.1.body": "Turer planeras i stängda chattar och gamla forumtrådar. Är du ny i stan är du inte med i dem.",
+        "problem.2.title": "Svårt att hitta rätt",
+        "problem.2.body": "Tempo, hoj och körstil spelar roll. Det är svårt att veta vem som passar innan ni redan har träffats.",
+        "problem.3.title": "Att dela position känns osäkert",
+        "problem.3.body": "De flesta platsappar delar för mycket, för länge. Förare vill bestämma själva vem som ser dem — och när.",
+        "nav.live": "Livekartan",
+        "live.kicker": "Livekartan",
+        "live.title": "Se vilka som kör — just nu.",
+        "live.lead": "Öppna appen så visar kartan förare nära dig som har valt att synas. Inga gamla incheckningar, ingen gissning: syns de på kartan är de ute och kör.",
+        "live.1.title": "Positioner i realtid", "live.1.body": "Förarna rör sig på kartan medan de kör och uppdateras med några sekunders mellanrum.",
+        "live.2.title": "Tryck på en förare", "live.2.body": "Se hoj, erfarenhet och körstil — skicka sedan en åkförfrågan eller åk dit.",
+        "live.3.title": "Filtrera det du ser", "live.3.body": "Byt stad, visa bara vänner eller begränsa till förare som kör som du.",
+        "live.4.title": "Alltid aktuell", "live.4.body": "När någon slutar dela eller tappar anslutningen försvinner de från kartan inom en minut.",
+        "live.chip": "5 förare live i närheten", "live.card": "Naked · 1,4 km bort",
+        "how.kicker": "Så funkar det",
+        "how.title": "Fyra enkla sätt att komma ut och köra.",
+        "how.lead": "Skapa en profil med din hoj, erfarenhet och intressen. Välj sedan det sätt som passar dig.",
+        "how.1.title": "Häng med på en tur", "how.1.body": "Bläddra bland planerade turer och träffar nära dig, gå med eller ansök och kom överens om mötesplats.",
+        "how.2.title": "Skicka en åkförfrågan", "how.2.body": "Hittat en förare som passar? Presentera dig. När de accepterar kan ni chatta och planera turen.",
+        "how.3.title": "Mötas på kartan", "how.3.body": "När en förare väljer att synas kan du åka dit och ansluta — vägbeskrivningen öppnas i din kartapp.",
+        "how.4.title": "Kör med vänner", "how.4.body": "Skriv till förare du har kontakt med, sätt ut en mötesplats och bestäm en tid.",
+        "privacy.kicker": "Integritet & säkerhet",
+        "privacy.title": "Dold som standard. Resten bestämmer du.",
+        "privacy.lead": "Ride Together är byggt så att du aldrig delar mer än du menar.",
+        "privacy.1.title": "Positionen är av tills du slår på den",
+        "privacy.1.body": "Välj vem som ser dig — bara vänner eller alla inloggade förare — och sluta dela med ett tryck.",
+        "privacy.2.title": "Bara live, aldrig historik",
+        "privacy.2.body": "Vi sparar inte dina rutter. När du slutar dela eller går offline försvinner din position.",
+        "privacy.3.title": "Extra skydd för yngre förare",
+        "privacy.3.body": "Förare under 18 delar bara position med vänner och kan inte kontaktas först av vuxna okända.",
+        "privacy.4.title": "Blockera och rapportera",
+        "privacy.4.body": "En blockering stänger direkt av kontakt och positionsåtkomst. Rapporter hanteras av riktiga moderatorer.",
+        "cities.kicker": "Var",
+        "cities.title": "Vi lanserar i hela Sverige.",
+        "cities.lead": "Var du än kör — från Malmö till Kiruna — finns det förare nära dig på kartan.",
+        "cities.more": "+ resten av Sverige",
+        "cta.title": "Redo att köra tillsammans?",
+        "cta.lead": "Gratis för iPhone och Android. Kommer snart.",
+        "footer.made": "Gjord för förare i Sverige.", "footer.top": "Till toppen ↑",
+        "toast": "Ride Together finns inte i butikerna än — kommer snart!"
+      }
+    };
+
+    let lang = "en";
+    function setLang(next) {
+      lang = next;
+      document.documentElement.lang = next;
+      document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = T[next][el.dataset.i18n]; });
+      document.querySelectorAll("[data-i18n-html]").forEach(el => { el.innerHTML = T[next][el.dataset.i18nHtml]; });
+      document.querySelectorAll("[data-lang]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === next)));
+      try { localStorage.setItem("rt-lang", next); } catch (e) {}
+    }
+    document.querySelectorAll("[data-lang]").forEach(b => b.addEventListener("click", () => setLang(b.dataset.lang)));
+    let saved = null;
+    try { saved = localStorage.getItem("rt-lang"); } catch (e) {}
+    setLang(saved || ((navigator.language || "").toLowerCase().startsWith("sv") ? "sv" : "en"));
+
+    // Store links are placeholders until the app is published.
+    const toast = document.getElementById("toast");
+    let toastTimer;
+    document.querySelectorAll(".js-store").forEach(a => a.addEventListener("click", e => {
+      e.preventDefault();
+      toast.textContent = T[lang].toast;
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+    }));
+
+    const header = document.getElementById("top");
+    document.querySelector(".js-top").addEventListener("click", e => { e.preventDefault(); scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" }); });
+    addEventListener("scroll", () => header.classList.toggle("scrolled", scrollY > 8), { passive: true });
+
+    const io = "IntersectionObserver" in window ? new IntersectionObserver(entries => {
+      entries.forEach(en => { if (en.isIntersecting) { en.target.classList.add("in"); io.unobserve(en.target); } });
+    }, { threshold: 0.12 }) : null;
+    document.querySelectorAll(".reveal").forEach(el => io ? io.observe(el) : el.classList.add("in"));
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
