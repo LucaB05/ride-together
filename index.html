@@ -255,6 +255,15 @@
 
     @media (max-width: 900px) {
       .hero-grid, .live-grid { grid-template-columns: 1fr; gap: 56px; }
+      /* Mobile hero order: title, then the app preview, then the text and store buttons. */
+      .hero-grid { gap: 0; }
+      .hero-text { display: contents; }
+      .hero-grid .eyebrow { order: 1; justify-self: start; }
+      .hero-grid h1 { order: 2; }
+      .hero-grid .phone { order: 3; margin: 12px auto 48px; }
+      .hero-grid .lead { order: 4; }
+      .hero-grid .stores { order: 5; }
+      .hero-grid .note { order: 6; }
       .problem-grid, .how-grid, .privacy-grid { grid-template-columns: 1fr; }
       .nav-links a { display: none; }
       section { padding: 72px 0; }
@@ -266,7 +275,8 @@
       .hero { padding: 40px 0 72px; }
       .dark { margin: 0; border-radius: 24px; }
       .btn-store { flex: 1 1 100%; justify-content: center; }
-      .phone { transform: scale(.92); transform-origin: top center; margin-bottom: -48px; }
+      .phone { transform: scale(.92); transform-origin: top center; }
+      .hero-grid .phone { margin-bottom: 0; }
       .beta-card { padding: 28px 20px; }
       .btn-primary { width: 100%; justify-content: center; }
     }
@@ -300,7 +310,7 @@
     <!-- Hero -->
     <div class="hero">
       <div class="wrap hero-grid">
-        <div>
+        <div class="hero-text">
           <span class="eyebrow" data-i18n="hero.eyebrow">Launching across Sweden</span>
           <h1 data-i18n-html="hero.title">Find people to <em>ride with.</em></h1>
           <p class="lead" data-i18n="hero.lead">Ride Together is a live map for motorcyclists. See who's riding near you right now, send a ride request, and meet up. Your location stays hidden until you choose to share it.</p>
